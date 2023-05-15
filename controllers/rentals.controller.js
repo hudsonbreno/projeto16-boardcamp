@@ -39,7 +39,7 @@ export async function postRentals(req, res) {
     await db.query(`INSERT INTO rentals("customerId" , "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee")
        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
        [customerId, gameId, rentDate, daysRented, returnDate, originalPrice, delayFee]);
-    res.sendStatus(200);
+    res.sendStatus(201);
   } catch (err) {
     res.status(500).send(err.message);
   }
