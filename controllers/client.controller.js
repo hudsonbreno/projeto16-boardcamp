@@ -2,7 +2,7 @@ import { db } from "../database/database.connection.js"
 
 export async function getClients(req, res) {
     try {
-      const customers = await db.query(`SELECT * FROM customers`);
+      const customers = await db.query(`SELECT customers.*,TO_CHAR(birthday::DATE, 'YYYY-MM-DD') AS birthday FROM customers`);
       res.send(customers.rows);
     } catch (err) {
       res.status(500).send(err.message);
@@ -12,7 +12,7 @@ export async function getClients(req, res) {
   export async function getClientById(req, res) {
     const { id } = req.params;
     try {
-      const customers = await db.query(`SELECT * FROM customers WHERE id=$1`, [id]);
+      const customers = await db.query(`SELECT customers.*,TO_CHAR(birthday::DATE, 'YYYY-MM-DD') AS birthday FROM customers WHERE id=$1`, [id]);
       res.send(customers.rows);
     } catch (err) {
       res.status(500).send(err.message);
@@ -22,6 +22,9 @@ export async function getClients(req, res) {
   export async function postClient(req, res) {
     const { name, phone, cpf, birthday } = req.body;
     try {
+      const clone = await db.query(`SELECT * FROM customers WHERE cpf=$1`,[cpf])
+      if(!clone.rowCount === 0) return res.sendStatus(409)
+
       await db.query(`
       INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1,$2,$3,$4)`,
       [name, phone, cpf, birthday]
