@@ -46,7 +46,7 @@ export async function getClients(req, res) {
       
       const customers = await db.query(`
       UPDATE customers SET name=$1, phone=$2, cpf=$3, birthday=$4 WHERE id=${id}`, [name, phone, cpf, birthday]);
-      res.sendstatus(200);
+      res.sendStatus(200);
     } catch (err) {
       res.status(500).send(err.message);
     }

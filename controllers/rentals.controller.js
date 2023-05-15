@@ -14,7 +14,7 @@ export async function postRentals(req, res) {
 
   try {
     const game = await db.query(`SELECT id, name,"stockTotal","pricePerDay" FROM games WHERE id=$1;`,[gameId])
-    console.log()
+    if(game.rows[0].stockTotal == 0) return res.status(400).send("stockTotal is 0")
     if(game.rowCount==0) return res.status(400).send("Game not exist")
 
     const gamePrice = game.rows[0].pricePerDay
@@ -65,14 +65,14 @@ export async function postFinalByIdRentals(req, res) {
     const rentals = await db.query(`SELECT * FROM rentals WHERE id = $1;`, [id]);
     if(rentals.rowCount==0) return res.sendStatus(404)
 
-    if(!rentals.rows[0].returnDate == null) return res.sendStatus(400);
+    if(rentals.rows[0].returnDate) return res.sendStatus(400);
 
     const rentDateString = JSON.stringify(rentals.rows[0].rentDate).substring(1,11)
 
     const data = new Date()
     const year = data.getFullYear();
     let month = data.getMonth()+1;
-    let day = data.getDate();
+    let day = data.getDate()+1;
     
     if (month < 10) {month = '0' + month;}
     if (day < 10) {day = '0' + day;}
@@ -82,6 +82,7 @@ export async function postFinalByIdRentals(req, res) {
     const rentDate = new Date(rentDateString);
     const returnDate = new Date(returnDateString);
 
+    const daysPay = rentDate.getTime() + rentals.rows[0].daysRented*(1000 * 60 *60 * 24)
     const diffTime = returnDate.getTime() - rentDate.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 *60 * 24))
     
