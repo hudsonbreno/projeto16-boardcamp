@@ -2,7 +2,13 @@ import { db } from "../database/database.connection.js";
 
 export async function getRentals(req, res) {
   try {
-    const rentals = await db.query(`SELECT * FROM rentals`);
+    const rentals = await db.query(`SELECT rentals.*, 
+    JSON_BUILD_OBJECT('customer', customers.*) AS customers ,
+    JSON_BUILD_OBJECT('games',games.*) AS games
+    FROM rentals
+    INNER JOIN customers ON rentals."customerId" = customers.id
+	  INNER JOIN games ON rentals."gameId" = games.id
+    `);
     res.send(rentals.rows);
   } catch (err) {
     res.status(500).send(err.message);
@@ -72,24 +78,30 @@ export async function postFinalByIdRentals(req, res) {
     const data = new Date()
     const year = data.getFullYear();
     let month = data.getMonth()+1;
-    let day = data.getDate()+1;
+    let day = data.getDate();
     
+
     if (month < 10) {month = '0' + month;}
     if (day < 10) {day = '0' + day;}
 
     const returnDateString = `${year}-${month}-${day}`
+    console.log(returnDateString)
 
     const rentDate = new Date(rentDateString);
     const returnDate = new Date(returnDateString);
 
-    const daysPay = rentDate.getTime() + rentals.rows[0].daysRented*(1000 * 60 *60 * 24)
-    const diffTime = returnDate.getTime() - rentDate.getTime()
+    const daysPayString = rentDate.getTime() + rentals.rows[0].daysRented*(1000 * 60 *60 * 24)
+    const daysPay = new Date(daysPayString);
+
+    const diffTime = daysPay.getTime() - returnDate.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 *60 * 24))
     
     const delayFee = diffDays * (rentals.rows[0].originalPrice/rentals.rows[0].daysRented)
 
+    const daysRented = rentals.rows[0].daysRented-1
+
     
-     await db.query(`UPDATE rentals SET "returnDate"=$1, "delayFee"=$2 WHERE id=$3`,[rentDateString, delayFee, id]);
+    await db.query(`UPDATE rentals SET "returnDate"=$1, "delayFee"=$2,"daysRented"=$3 WHERE id=$4`,[rentDateString, delayFee,daysRented, id]);
 
 
     res.sendStatus(200);
@@ -112,3 +124,5 @@ export async function deleteRental(req, res) {
     res.status(500).send(err.message);
   }
 }
+
+
